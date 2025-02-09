@@ -11,19 +11,21 @@ Reviewer Submission Request :
 
 Reviewer Submission Response
 {
-
+    Sucess on all three(CRU)/ if any error then show Error 
 };
 
 ---
 
 Close Story Request :
 {
+    "user"
 "currentSprint" : 78
 };
 
 Close Story Response :
 {
-"currentSprint" : 78
+    Sucess on all three(RU)/ if any error then show Error 
+
 };
 
 ---

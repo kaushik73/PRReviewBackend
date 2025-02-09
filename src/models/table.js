@@ -5,7 +5,7 @@ const tableSchema = new mongoose.Schema({
     ref: "StoryReviewersForm",
     required: true,
   },
-  actions: { type: String }, // Placeholder for action field
+  actions: { type: String }, 
 });
 
 module.exports = mongoose.model("Table", tableSchema);
