@@ -20,81 +20,87 @@ const loadOrCreateWorkbook = () => {
  */
 const loadOrCreateWorksheet = (workbook, sheetName) => {
   if (!workbook.Sheets[sheetName]) {
-    const worksheet = XLSX.utils.aoa_to_sheet([]); // Create an empty sheet
-    workbook.SheetNames.push(sheetName); // Add sheet name to the workbook
-    workbook.Sheets[sheetName] = worksheet; // Add the empty sheet to the workbook
+    const worksheet = XLSX.utils.aoa_to_sheet([]);
+    workbook.SheetNames.push(sheetName);
+    workbook.Sheets[sheetName] = worksheet;
     return worksheet;
   }
   return workbook.Sheets[sheetName];
 };
 
 /**
- * Add a row for the "Assignee" type
- * @param {Object} worksheet - The worksheet object
- * @param {Object} data - The data for the row
+ * Find a row index by storyNumber
+ * @param {Array} data - Parsed sheet data
+ * @param {String} storyNumber - Story Number to search for
  */
-const addAssigneeRow = (worksheet, data) => {
+const findRowIndexByStoryNumber = (data, storyNumber) => {
+  return data.findIndex(row => row[0] === storyNumber);
+};
+
+/**
+ * Add or update an assignee row
+ * @param {Array} sheetData - Parsed sheet data
+ * @param {Object} data - The data for the row
+ * @param {Number} rowIndex - Index of the row to update, or -1 if new
+ */
+const addAssigneeRow = (sheetData, data, rowIndex) => {
   const row = [
     data.storyNumber,
-    { t: "s", v: data.storyName, l: { Target: data.storyLink } }, // Hyperlink
-    "", // Empty for column C
+    { t: "s", v: data.storyName, l: { Target: data.storyLink } },
+    data.storyLink,
+    data.sprintNumber,
     data.prLink,
-    data.requiredReviewer1,
-    "", // Empty for column F
-    data.requiredReviewer2,
+    data.workingPerson,
+    data.reviewer1,
+    data.reviewer2,
   ];
-  XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
+
+  if (rowIndex !== -1) {
+    sheetData[rowIndex] = row;
+  } else {
+    sheetData.push(row);
+  }
+  return sheetData;
 };
 
 /**
  * Add a row for the "Reviewer" type
- * @param {Object} worksheet - The worksheet object
+ * @param {Array} sheetData - Parsed sheet data
  * @param {Object} data - The data for the row
  */
-const addReviewerRow = (worksheet, data) => {
+const addReviewerRow = (sheetData, data) => {
   const row = [
-    data.storyNumber,
-    "", // Empty for column B
-    "", // Empty for column C
-    "", // Empty for column D
-    "", // Empty for column E
-    data.overallGrading,
-    "", // Empty for column G
-    data.criticalComments, // Red cell
-    data.codingGuidelineComments, // Orange cell
+    data.storyNumber, "", "", "", "", data.overallGrading, "", data.criticalComments, data.codingGuidelineComments
   ];
-  XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
-
-  // Add styles for critical and coding guideline comments
-  const ref = worksheet["!ref"] || "A1";
-  const lastRow = parseInt(ref.split(":")[1].replace(/^\D+/g, ""), 10); // Calculate the last row number
-  worksheet[`H${lastRow}`] = {
-    v: data.criticalComments,
-    s: { fill: { fgColor: { rgb: "FF0000" } } }, // Red fill
-  };
-  worksheet[`I${lastRow}`] = {
-    v: data.codingGuidelineComments,
-    s: { fill: { fgColor: { rgb: "FFA500" } } }, // Orange fill
-  };
+  sheetData.push(row);
+  return sheetData;
 };
 
 /**
  * Save data to Excel
- * @param {String} type - Type of data ("Assignee" or "Reviewer")
+ * @param {String} type - Type of data ("assignee" or "reviewer")
  * @param {Object} data - The data to be saved
  */
 const saveDataToExcel = (type, data) => {
   const workbook = loadOrCreateWorkbook();
   const sheetName = "PR Tracker";
   const worksheet = loadOrCreateWorksheet(workbook, sheetName);
+  let sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-  if (type === "Assignee") {
-    addAssigneeRow(worksheet, data);
-  } else if (type === "Reviewer") {
-    addReviewerRow(worksheet, data);
+  if (sheetData.length === 0) {
+    sheetData.push(["Story Number", "Story Name", "Story Link", "Sprint Number", "PR Link", "Working Person", "Reviewer 1", "Reviewer 2", "Is Active"]);
   }
 
-  workbook.Sheets[sheetName] = worksheet;
+  const rowIndex = findRowIndexByStoryNumber(sheetData, data.storyNumber);
+
+  if (type === "assignee") {
+    sheetData = addAssigneeRow(sheetData, data, rowIndex);
+  } else if (type === "reviewer") {
+    sheetData = addReviewerRow(sheetData, data);
+  }
+
+  const updatedWorksheet = XLSX.utils.aoa_to_sheet(sheetData);
+  workbook.Sheets[sheetName] = updatedWorksheet;
   XLSX.writeFile(workbook, filePath);
 };
 

@@ -1,4 +1,5 @@
 const StorySubmission = require('../models/storySubmission');
+const { saveDataToExcel } = require('../services/excelService');
 
 const getallstory = async (req, res) => {
     try {
@@ -49,6 +50,8 @@ const submitstory = async (req, res)=>{
             reviewer1,
             reviewer2,
         })
+        console.log("storySubmission", story);
+        saveDataToExcel("assignee", story);
 
         return res.status(200).json({
             message: "story postes successfully",
@@ -95,7 +98,7 @@ const updatestory = async (req, res) => {
                 status: false
             });
         }
-
+        saveDataToExcel("assignee", updatedStory);
         return res.status(200).json({
             message: "Story updated successfully",
             story: updatedStory,
@@ -130,6 +133,7 @@ const closestory = async (req, res) => {
                 status: false
             });
         }
+        saveDataToExcel("assignee", updatedStory);
 
         return res.status(200).json({
             message: "Story closed successfully",
