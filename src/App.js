@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const authRouter = require("./routes/authRoutes");
-const PRTrackerRouter = require("./routes/prTrackerRoutes");
+// const PRTrackerRouter = require("./routes/prTrackerRoutes");
 const connectDB = require("./database/dbConfig");
 const storySubmissionRoute = require("./routes/storySubmissionRoutes.js")
 const storyReviewRoute = require("./routes/storyReviewRoutes.js")
@@ -22,7 +22,7 @@ app.get("/data",(req, res)=>{
 
 app.use("/api/story", storySubmissionRoute);
 app.use("/api/review", storyReviewRoute)
-app.use("/submit", PRTrackerRouter);
+// app.use("/submit", PRTrackerRouter);
 app.use("/auth", authRouter);
 
 const startApp = () => {
